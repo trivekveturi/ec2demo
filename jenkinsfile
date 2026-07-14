@@ -1,23 +1,59 @@
 pipeline {
-    agent any
+    agent {
+        label 'git'
+    }
 
     stages {
-        stage('Build') {
+
+        stage('Checkout') {
             steps {
-                echo 'Building the project...'
+                git branch: 'main',
+                    credentialsId: 'github-creds',
+                    url: 'https://github.com/user/demo.git'
             }
         }
 
-        stage('Test') {
+        stage('Modify File') {
             steps {
-                echo 'Running tests...'
+                sh '''
+                echo "Build Number : ${BUILD_NUMBER}" >> build.txt
+                '''
             }
         }
 
-        stage('Deploy') {
+        stage('Git Add') {
             steps {
-                echo 'Deploying application...'
+                sh 'git add .'
             }
         }
+
+        stage('Git Commit') {
+            steps {
+                sh '''
+                git config user.name "Jenkins"
+                git config user.email "jenkins@example.com"
+
+                git commit -m "Commit from Jenkins Build ${BUILD_NUMBER}" || true
+                '''
+            }
+        }
+
+        stage('Git Push') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'github-creds',
+                        usernameVariable: 'USER',
+                        passwordVariable: 'TOKEN'
+                    )
+                ]) {
+
+                    sh '''
+                    git push https://${USER}:${TOKEN}@github.com/user/demo.git HEAD:main
+                    '''
+                }
+            }
+        }
+
     }
 }
