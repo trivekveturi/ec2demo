@@ -13,7 +13,27 @@ pipeline {
             steps {
                 cleanWs()
             }
+        }
 
+        stage("Checkout from SCM") {
+            steps {
+                git branch: 'main',
+                    credentialsId: 'github',
+                    url: 'https://github.com/trivekveturi/ec2demo.git'
+            }
+        }
+
+        stage("Build Application") {
+            steps {
+                sh 'mvn -B clean package -DskipTests'
+            }
+        }
+
+        stage("Test Application") {
+            steps {
+                sh 'mvn -B test'
+            }
+           
         }
     }
 }
