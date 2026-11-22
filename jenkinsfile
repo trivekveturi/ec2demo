@@ -1,59 +1,19 @@
 pipeline {
     agent {
-        label 'git'
+        label 'jenkins agent'
+    }
+
+    tools {
+        jdk 'Java'
+        maven 'maven'
     }
 
     stages {
-
-        stage('Checkout') {
+        stage("Cleanup Workspace") {
             steps {
-                git branch: 'main',
-                    credentialsId: 'github-creds',
-                    url: 'https://github.com/user/demo.git'
+                cleanWs()
             }
+
         }
-
-        stage('Modify File') {
-            steps {
-                sh '''
-                echo "Build Number : ${BUILD_NUMBER}" >> build.txt
-                '''
-            }
-        }
-
-        stage('Git Add') {
-            steps {
-                sh 'git add .'
-            }
-        }
-
-        stage('Git Commit') {
-            steps {
-                sh '''
-                git config user.name "Jenkins"
-                git config user.email "jenkins@example.com"
-
-                git commit -m "Commit from Jenkins Build ${BUILD_NUMBER}" || true
-                '''
-            }
-        }
-
-        stage('Git Push') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'github-creds',
-                        usernameVariable: 'USER',
-                        passwordVariable: 'TOKEN'
-                    )
-                ]) {
-
-                    sh '''
-                    git push https://${USER}:${TOKEN}@github.com/user/demo.git HEAD:main
-                    '''
-                }
-            }
-        }
-
     }
 }
